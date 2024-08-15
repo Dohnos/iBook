@@ -31,12 +31,23 @@
             </div>
         </div>
 
+        <!-- Nová sekce pro odpočet -->
+        <div id="countdownSection" class="mt-4 p-4 bg-blue-100 rounded-lg hidden">
+            <p class="text-xl font-semibold text-blue-800">Otevření dalších vyhledávání za: <span id="countdown" class="font-bold">5</span> sekund</p>
+        </div>
+
         <div class="mt-8 p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-r-lg">
             <h2 class="text-xl font-semibold mb-2 text-yellow-800">⚠️ Důležité informace:</h2>
             <ul class="list-disc pl-5 space-y-2 text-yellow-700">
                 <li>❓ Pokud se objeví zpráva "Na váš předmět vyhledávání nebyl nalezen žádný odkaz", znamená to, že daný titul není na webu dostupný.</li>
                 <li>🌐 <strong>Vyhledávání probíhá na:</strong> Google Books, trhknih.cz, kniha4u.cz, restorio.cz, databazeknih.cz</li>
                 <li>🖥️ <strong>Pro správnou funkčnost:</strong> Je nutné mít v prohlížeči povolená vyskakovací okna pro tento web.</li>
+                <li>🔓 <strong>Jak povolit vyskakovací okna:</strong>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Google Chrome: Otevřete <a href="chrome://settings/content/popups" target="_blank" class="text-blue-600 hover:underline">chrome://settings/content/popups</a></li>
+                        <li>Microsoft Edge: Otevřete <a href="edge://settings/content/popups" target="_blank" class="text-blue-600 hover:underline">edge://settings/content/popups</a></li>
+                    </ul>
+                </li>
             </ul>
         </div>
 
@@ -62,21 +73,36 @@
                 // Nejprve vyhledáme v Google Books
                 searchGoogleBooks(fullQuery);
 
-                // Po 5 sekundách otevřeme ostatní vyhledávací URL
-                setTimeout(() => {
-                    const searchUrls = [
-                        `https://www.google.com/search?q=site:trhknih.cz+${encodeURIComponent(fullQuery)}`,
-                        `https://www.google.com/search?q=site:kniha4u.cz+${encodeURIComponent(fullQuery)}`,
-                        `https://www.google.com/search?q=site:restorio.cz+${encodeURIComponent(fullQuery)}`,
-                        `https://www.google.com/search?q=site:databazeknih.cz+${encodeURIComponent(fullQuery)}`
-                    ];
-                    searchUrls.forEach(url => window.open(url, '_blank'));
-                }, 5000);
+                // Zobrazíme sekci s odpočtem
+                const countdownSection = document.getElementById('countdownSection');
+                countdownSection.classList.remove('hidden');
+                let countdown = 5;
+                const countdownElement = document.getElementById('countdown');
+                
+                const timer = setInterval(() => {
+                    countdown--;
+                    countdownElement.textContent = countdown;
+                    if (countdown <= 0) {
+                        clearInterval(timer);
+                        countdownSection.classList.add('hidden');
+                        openSearchUrls(fullQuery);
+                    }
+                }, 1000);
 
                 addToRecentSearches(fullQuery);
             } else {
                 alert("Zadejte prosím název knihy.");
             }
+        }
+
+        function openSearchUrls(fullQuery) {
+            const searchUrls = [
+                `https://www.google.com/search?q=site:trhknih.cz+${encodeURIComponent(fullQuery)}`,
+                `https://www.google.com/search?q=site:kniha4u.cz+${encodeURIComponent(fullQuery)}`,
+                `https://www.google.com/search?q=site:restorio.cz+${encodeURIComponent(fullQuery)}`,
+                `https://www.google.com/search?q=site:databazeknih.cz+${encodeURIComponent(fullQuery)}`
+            ];
+            searchUrls.forEach(url => window.open(url, '_blank'));
         }
 
         function searchGoogleBooks(query) {
