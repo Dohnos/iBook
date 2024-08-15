@@ -23,17 +23,17 @@
             <button onclick="searchBook()" class="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 font-semibold text-lg shadow-md">🔍 Vyhledat knihu</button>
         </div>
         
+        <!-- Nová sekce pro odpočet (přesunuto nad výsledky Google Books) -->
+        <div id="countdownSection" class="mt-4 p-4 bg-blue-100 rounded-lg hidden">
+            <p class="text-xl font-semibold text-blue-800">Otevření dalších vyhledávání za: <span id="countdown" class="font-bold">5</span> sekund</p>
+        </div>
+
         <!-- Sekce pro výsledky z Google Books -->
         <div id="googleBooksResults" class="mt-8 hidden">
             <h2 class="text-2xl font-semibold mb-4 text-indigo-600">📚 Výsledky z Google Books</h2>
             <div id="bookInfo" class="space-y-4">
                 <!-- Zde se budou zobrazovat informace o knize -->
             </div>
-        </div>
-
-        <!-- Nová sekce pro odpočet -->
-        <div id="countdownSection" class="mt-4 p-4 bg-blue-100 rounded-lg hidden">
-            <p class="text-xl font-semibold text-blue-800">Otevření dalších vyhledávání za: <span id="countdown" class="font-bold">5</span> sekund</p>
         </div>
 
         <div class="mt-8 p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-r-lg">
@@ -119,8 +119,6 @@
             const searchUrls = [
                 `https://www.google.com/search?q=site:trhknih.cz+${encodeURIComponent(fullQuery)}`,
                 `https://www.google.com/search?q=site:kniha4u.cz+${encodeURIComponent(fullQuery)}`,
-                `https://www.google.com/search?q=site:antikavion.cz+${encodeURIComponent(fullQuery)}`,
-                `https://www.google.com/search?q=site:knihobot.cz+${encodeURIComponent(fullQuery)}`,
                 `https://www.google.com/search?q=site:restorio.cz+${encodeURIComponent(fullQuery)}`,
                 `https://www.google.com/search?q=site:databazeknih.cz+${encodeURIComponent(fullQuery)}`
             ];
@@ -142,14 +140,16 @@
                         data.items.forEach((item, index) => {
                             const book = item.volumeInfo;
                             const bookElement = document.createElement('div');
-                            bookElement.className = 'bg-gray-100 p-4 rounded-lg mb-4' + (index === 0 ? ' border-2 border-indigo-500' : '');
+                            bookElement.className = 'bg-white p-6 rounded-lg shadow-md mb-4 flex' + (index === 0 ? ' border-2 border-indigo-500' : '');
                             bookElement.innerHTML = `
-                                <img src="${book.imageLinks?.thumbnail || '/api/placeholder/128/192'}" alt="${book.title}" class="float-left mr-4 mb-4">
-                                <h3 class="text-xl font-semibold">${book.title}</h3>
-                                <p><strong>Autor:</strong> ${book.authors?.join(', ') || 'Neznámý'}</p>
-                                <p><strong>Rok vydání:</strong> ${book.publishedDate || 'Neznámý'}</p>
-                                <p><strong>Nakladatel:</strong> ${book.publisher || 'Neznámý'}</p>
-                                <p><strong>Popis:</strong> ${book.description ? book.description.substring(0, 200) + '...' : 'Není k dispozici'}</p>
+                                <img src="${book.imageLinks?.thumbnail || '/api/placeholder/128/192'}" alt="${book.title}" class="w-24 h-36 object-cover rounded-md mr-4">
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-semibold text-indigo-700 mb-2">${book.title}</h3>
+                                    <p class="text-gray-600"><strong>Autor:</strong> ${book.authors?.join(', ') || 'Neznámý'}</p>
+                                    <p class="text-gray-600"><strong>Rok vydání:</strong> ${book.publishedDate || 'Neznámý'}</p>
+                                    <p class="text-gray-600"><strong>Nakladatel:</strong> ${book.publisher || 'Neznámý'}</p>
+                                    <p class="text-gray-700 mt-2"><strong>Popis:</strong> ${book.description ? book.description.substring(0, 150) + '...' : 'Není k dispozici'}</p>
+                                </div>
                             `;
                             bookInfo.appendChild(bookElement);
                         });
