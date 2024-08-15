@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vyhledávání knih</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        @keyframes fly {
+            0% { transform: translateX(-100%) rotate(0deg); }
+            25% { transform: translateX(0%) rotate(90deg); }
+            50% { transform: translateX(100%) rotate(180deg); }
+            75% { transform: translateX(0%) rotate(270deg); }
+            100% { transform: translateX(-100%) rotate(360deg); }
+        }
+        .flying-book {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            animation: fly 10s infinite linear;
+            pointer-events: none;
+            z-index: 1;
+            top: 80px;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen flex flex-col items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl relative">
+        <h1 class="text-4xl font-bold mb-6 text-center text-indigo-600">📚 Vyhledávání knih 📚</h1>
+        <img src="https://i.postimg.cc/0NDQxYt7/Favikon.png" alt="Flying Book" class="flying-book">
+        <div class="mb-6 space-y-4">
+            <input id="searchQuery" type="text" placeholder="Zadejte název knihy (povinné) 📖" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
+            <input id="searchYear" type="text" placeholder="Rok vydání (volitelné) 📅" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
+            <input id="searchAuthor" type="text" placeholder="Autor (volitelné) ✍️" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
+            <input id="searchPublisher" type="text" placeholder="Nakladatel (volitelné) 🏢" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
+        </div>
+        <div class="flex space-x-4 mb-6">
+            <button onclick="searchBook()" class="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 font-semibold text-lg shadow-md">🔍 Vyhledat na webech</button>
+        </div>
+        
+        <div class="mt-8 p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-r-lg">
+            <h2 class="text-xl font-semibold mb-2 text-yellow-800">⚠️ Důležité informace:</h2>
+            <ul class="list-disc pl-5 space-y-2 text-yellow-700">
+                <li>❓ Pokud se objeví zpráva "Na váš předmět vyhledávání nebyl nalezen žádný odkaz", znamená to, že daný titul není na webu dostupný.</li>
+                <li>🌐 <strong>Vyhledávání probíhá na:</strong> trhknih.cz, kniha4u.cz, restorio.cz, databazeknih.cz</li>
+                <li>🖥️ <strong>Pro správnou funkčnost:</strong> Je nutné mít v prohlížeči povolená vyskakovací okna pro tento web.</li>
+            </ul>
+        </div>
+
+        <div id="recentSearches" class="mt-8">
+            <h2 class="text-2xl font-semibold mb-4 text-indigo-600">🕒 Poslední vyhledávání:</h2>
+            <ul id="recentSearchesList" class="list-disc pl-5 space-y-2"></ul>
+        </div>
+    </div>
+
+    <script>
+        function searchBook() {
+            const query = document.getElementById('searchQuery').value.trim();
+            const year = document.getElementById('searchYear').value.trim();
+            const author = document.getElementById('searchAuthor').value.trim();
+            const publisher = document.getElementById('searchPublisher').value.trim();
+
+            if (query) {
+                let fullQuery = query;
+                if (year) fullQuery += ` ${year}`;
+                if (author) fullQuery += ` ${author}`;
+                if (publisher) fullQuery += ` ${publisher}`;
+
+                const searchUrls = [
+                    `https://www.google.com/search?q=site:trhknih.cz+${encodeURIComponent(fullQuery)}`,
+                    `https://www.google.com/search?q=site:kniha4u.cz+${encodeURIComponent(fullQuery)}`,
+                    `https://www.google.com/search?q=site:restorio.cz+${encodeURIComponent(fullQuery)}`,
+                    `https://www.google.com/search?q=site:databazeknih.cz+${encodeURIComponent(fullQuery)}`
+                ];
+
+                searchUrls.forEach(url => window.open(url, '_blank'));
+                addToRecentSearches(fullQuery);
+            } else {
+                alert("Zadejte prosím název knihy.");
+            }
+        }
+
+        function addToRecentSearches(query) {
+            let recentSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
+            recentSearches.unshift(query);
+            recentSearches = recentSearches.slice(0, 5);
+            localStorage.setItem('recentSearches', JSON.stringify(recentSearches));
+            updateRecentSearchesList();
+        }
+
+        function updateRecentSearchesList() {
+            const recentSearches = JSON.parse(localStorage.getItem('recentSearches')) || [];
+            const list = document.getElementById('recentSearchesList');
+            list.innerHTML = '';
+            recentSearches.forEach(search => {
+                const li = document.createElement('li');
+                li.textContent = search;
+                li.className = 'cursor-pointer text-indigo-600 hover:text-indigo-800 transition duration-300';
+                li.onclick = () => {
+                    document.getElementById('searchQuery').value = search;
+                };
+                list.appendChild(li);
+            });
+        }
+
+        updateRecentSearchesList();
+    </script>
+</body>
+</html>
