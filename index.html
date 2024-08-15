@@ -22,14 +22,18 @@
             animation: fly 10s infinite linear;
             pointer-events: none;
             z-index: 1;
-            top: 80px;
+            top: -60px; /* Upraveno, aby kniha létala nad nadpisem */
+            left: 50%;
+            transform: translateX(-50%);
         }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen flex flex-col items-center justify-center p-4">
     <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-2xl relative">
-        <h1 class="text-4xl font-bold mb-6 text-center text-indigo-600">📚 Vyhledávání knih 📚</h1>
-        <img src="https://i.postimg.cc/0NDQxYt7/Favikon.png" alt="Flying Book" class="flying-book">
+        <div class="relative mb-8"> <!-- Přidán obal pro nadpis a létající knihu -->
+            <img src="https://i.postimg.cc/0NDQxYt7/Favikon.png" alt="Flying Book" class="flying-book">
+            <h1 class="text-4xl font-bold mb-6 text-center text-indigo-600">📚 Vyhledávání knih 📚</h1>
+        </div>
         <div class="mb-6 space-y-4">
             <input id="searchQuery" type="text" placeholder="Zadejte název knihy (povinné) 📖" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
             <input id="searchYear" type="text" placeholder="Rok vydání (volitelné) 📅" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
@@ -40,11 +44,19 @@
             <button onclick="searchBook()" class="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 font-semibold text-lg shadow-md">🔍 Vyhledat na webech</button>
         </div>
         
+        <!-- Nová sekce pro výsledky z Google Books -->
+        <div id="googleBooksResults" class="mt-8 hidden">
+            <h2 class="text-2xl font-semibold mb-4 text-indigo-600">📚 Výsledky z Google Books</h2>
+            <div id="bookInfo" class="bg-gray-100 p-4 rounded-lg">
+                <!-- Zde se budou zobrazovat informace o knize -->
+            </div>
+        </div>
+
         <div class="mt-8 p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-r-lg">
             <h2 class="text-xl font-semibold mb-2 text-yellow-800">⚠️ Důležité informace:</h2>
             <ul class="list-disc pl-5 space-y-2 text-yellow-700">
                 <li>❓ Pokud se objeví zpráva "Na váš předmět vyhledávání nebyl nalezen žádný odkaz", znamená to, že daný titul není na webu dostupný.</li>
-                <li>🌐 <strong>Vyhledávání probíhá na:</strong> trhknih.cz, kniha4u.cz, restorio.cz, databazeknih.cz</li>
+                <li>🌐 <strong>Vyhledávání probíhá na:</strong> trhknih.cz, kniha4u.cz, restorio.cz, databazeknih.cz, Google Books</li>
                 <li>🖥️ <strong>Pro správnou funkčnost:</strong> Je nutné mít v prohlížeči povolená vyskakovací okna pro tento web.</li>
             </ul>
         </div>
@@ -77,9 +89,38 @@
 
                 searchUrls.forEach(url => window.open(url, '_blank'));
                 addToRecentSearches(fullQuery);
+                
+                // Vyhledávání v Google Books
+                searchGoogleBooks(fullQuery);
             } else {
                 alert("Zadejte prosím název knihy.");
             }
+        }
+
+        function searchGoogleBooks(query) {
+            fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.items && data.items.length > 0) {
+                        const book = data.items[0].volumeInfo;
+                        const bookInfo = document.getElementById('bookInfo');
+                        bookInfo.innerHTML = `
+                            <img src="${book.imageLinks?.thumbnail || '/api/placeholder/128/192'}" alt="${book.title}" class="float-left mr-4 mb-4">
+                            <h3 class="text-xl font-semibold">${book.title}</h3>
+                            <p><strong>Autor:</strong> ${book.authors?.join(', ') || 'Neznámý'}</p>
+                            <p><strong>Rok vydání:</strong> ${book.publishedDate || 'Neznámý'}</p>
+                            <p><strong>Nakladatel:</strong> ${book.publisher || 'Neznámý'}</p>
+                            <p><strong>Popis:</strong> ${book.description || 'Není k dispozici'}</p>
+                        `;
+                        document.getElementById('googleBooksResults').classList.remove('hidden');
+                    } else {
+                        document.getElementById('googleBooksResults').classList.add('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Chyba při načítání dat z Google Books:', error);
+                    document.getElementById('googleBooksResults').classList.add('hidden');
+                });
         }
 
         function addToRecentSearches(query) {
