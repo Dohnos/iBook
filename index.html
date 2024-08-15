@@ -26,7 +26,7 @@
         <!-- Sekce pro výsledky z Google Books -->
         <div id="googleBooksResults" class="mt-8 hidden">
             <h2 class="text-2xl font-semibold mb-4 text-indigo-600">📚 Výsledky z Google Books</h2>
-            <div id="bookInfo" class="bg-gray-100 p-4 rounded-lg">
+            <div id="bookInfo" class="space-y-4">
                 <!-- Zde se budou zobrazovat informace o knize -->
             </div>
         </div>
@@ -44,8 +44,28 @@
                 <li>🖥️ <strong>Pro správnou funkčnost:</strong> Je nutné mít v prohlížeči povolená vyskakovací okna pro tento web.</li>
                 <li>🔓 <strong>Jak povolit vyskakovací okna:</strong>
                     <ul class="list-disc pl-5 mt-2">
-                        <li>Google Chrome: Otevřete <a href="chrome://settings/content/popups" target="_blank" class="text-blue-600 hover:underline">chrome://settings/content/popups</a></li>
-                        <li>Microsoft Edge: Otevřete <a href="edge://settings/content/popups" target="_blank" class="text-blue-600 hover:underline">edge://settings/content/popups</a></li>
+                        <li>Google Chrome:
+                            <ol class="list-decimal pl-5 mt-1">
+                                <li>Klikněte na ikonu tří teček v pravém horním rohu prohlížeče</li>
+                                <li>Vyberte "Nastavení"</li>
+                                <li>V levém menu klikněte na "Ochrana soukromí a zabezpečení"</li>
+                                <li>Klikněte na "Nastavení webu"</li>
+                                <li>Najděte "Vyskakovací okna a přesměrování"</li>
+                                <li>Klikněte na "Přidat" vedle "Povoleno"</li>
+                                <li>Zadejte adresu tohoto webu a klikněte na "Přidat"</li>
+                            </ol>
+                        </li>
+                        <li>Microsoft Edge:
+                            <ol class="list-decimal pl-5 mt-1">
+                                <li>Klikněte na ikonu tří teček v pravém horním rohu prohlížeče</li>
+                                <li>Vyberte "Nastavení"</li>
+                                <li>V levém menu klikněte na "Oprávnění webu"</li>
+                                <li>Najděte "Vyskakovací okna a přesměrování"</li>
+                                <li>Zapněte přepínač "Povolit weby zobrazovat vyskakovací okna a přesměrování"</li>
+                                <li>Klikněte na "Přidat" pod "Povoleno"</li>
+                                <li>Zadejte adresu tohoto webu a klikněte na "Přidat"</li>
+                            </ol>
+                        </li>
                     </ul>
                 </li>
             </ul>
@@ -71,7 +91,7 @@
                 if (publisher) fullQuery += ` ${publisher}`;
 
                 // Nejprve vyhledáme v Google Books
-                searchGoogleBooks(fullQuery);
+                searchGoogleBooks(query, year, author, publisher);
 
                 // Zobrazíme sekci s odpočtem
                 const countdownSection = document.getElementById('countdownSection');
@@ -105,21 +125,32 @@
             searchUrls.forEach(url => window.open(url, '_blank'));
         }
 
-        function searchGoogleBooks(query) {
-            fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}`)
+        function searchGoogleBooks(query, year, author, publisher) {
+            let apiQuery = `intitle:${query}`;
+            if (author) apiQuery += `+inauthor:${author}`;
+            if (publisher) apiQuery += `+inpublisher:${publisher}`;
+            if (year) apiQuery += `+inpublishedDate:${year}`;
+
+            fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(apiQuery)}&maxResults=5`)
                 .then(response => response.json())
                 .then(data => {
                     if (data.items && data.items.length > 0) {
-                        const book = data.items[0].volumeInfo;
                         const bookInfo = document.getElementById('bookInfo');
-                        bookInfo.innerHTML = `
-                            <img src="${book.imageLinks?.thumbnail || '/api/placeholder/128/192'}" alt="${book.title}" class="float-left mr-4 mb-4">
-                            <h3 class="text-xl font-semibold">${book.title}</h3>
-                            <p><strong>Autor:</strong> ${book.authors?.join(', ') || 'Neznámý'}</p>
-                            <p><strong>Rok vydání:</strong> ${book.publishedDate || 'Neznámý'}</p>
-                            <p><strong>Nakladatel:</strong> ${book.publisher || 'Neznámý'}</p>
-                            <p><strong>Popis:</strong> ${book.description || 'Není k dispozici'}</p>
-                        `;
+                        bookInfo.innerHTML = ''; // Clear previous results
+                        data.items.forEach((item, index) => {
+                            const book = item.volumeInfo;
+                            const bookElement = document.createElement('div');
+                            bookElement.className = 'bg-gray-100 p-4 rounded-lg mb-4' + (index === 0 ? ' border-2 border-indigo-500' : '');
+                            bookElement.innerHTML = `
+                                <img src="${book.imageLinks?.thumbnail || '/api/placeholder/128/192'}" alt="${book.title}" class="float-left mr-4 mb-4">
+                                <h3 class="text-xl font-semibold">${book.title}</h3>
+                                <p><strong>Autor:</strong> ${book.authors?.join(', ') || 'Neznámý'}</p>
+                                <p><strong>Rok vydání:</strong> ${book.publishedDate || 'Neznámý'}</p>
+                                <p><strong>Nakladatel:</strong> ${book.publisher || 'Neznámý'}</p>
+                                <p><strong>Popis:</strong> ${book.description ? book.description.substring(0, 200) + '...' : 'Není k dispozici'}</p>
+                            `;
+                            bookInfo.appendChild(bookElement);
+                        });
                         document.getElementById('googleBooksResults').classList.remove('hidden');
                     } else {
                         document.getElementById('googleBooksResults').classList.add('hidden');
