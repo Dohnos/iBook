@@ -15,6 +15,7 @@
         <h1 class="text-4xl font-bold mb-6 text-center text-indigo-600">📚 Vyhledávání knih 📚</h1>
         <div class="mb-6 space-y-4">
             <input id="searchQuery" type="text" placeholder="Zadejte název knihy (povinné) 📖" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
+            <input id="searchISBN" type="text" placeholder="ISBN (volitelné) 📙" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
             <input id="searchYear" type="text" placeholder="Rok vydání (volitelné) 📅" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
             <input id="searchAuthor" type="text" placeholder="Autor (volitelné) ✍️" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
             <input id="searchPublisher" type="text" placeholder="Nakladatel (volitelné) 🏢" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition duration-300">
@@ -40,7 +41,7 @@
             <h2 class="text-xl font-semibold mb-2 text-yellow-800">⚠️ Důležité informace:</h2>
             <ul class="list-disc pl-5 space-y-2 text-yellow-700">
                 <li>❓ Pokud se objeví zpráva "Na váš předmět vyhledávání nebyl nalezen žádný odkaz", znamená to, že daný titul není na webu dostupný.</li>
-                <li>🌐 <strong>Vyhledávání probíhá na:</strong> Google Books, trhknih.cz, kniha4u.cz, restorio.cz, databazeknih.cz</li>
+                <li>🌐 <strong>Vyhledávání probíhá na:</strong> Google Books, trhknih.cz, kniha4u.cz, antikavion.cz, restorio.cz, knihobot.cz, valentinska.cz, databazeknih.cz, reknihy.cz</li>
                 <li>🖥️ <strong>Pro správnou funkčnost:</strong> Je nutné mít v prohlížeči povolená vyskakovací okna pro tento web.</li>
                 <li>🔓 <strong>Jak povolit vyskakovací okna:</strong>
                     <ul class="list-disc pl-5 mt-2">
@@ -80,18 +81,20 @@
     <script>
         function searchBook() {
             const query = document.getElementById('searchQuery').value.trim();
+            const isbn = document.getElementById('searchISBN').value.trim();  
             const year = document.getElementById('searchYear').value.trim();
             const author = document.getElementById('searchAuthor').value.trim();
             const publisher = document.getElementById('searchPublisher').value.trim();
 
-            if (query) {
+            if (query || isbn) {
                 let fullQuery = query;
+                if (isbn) fullQuery += ` ${isbn}`;
                 if (year) fullQuery += ` ${year}`;
                 if (author) fullQuery += ` ${author}`;
                 if (publisher) fullQuery += ` ${publisher}`;
 
                 // Nejprve vyhledáme v Google Books
-                searchGoogleBooks(query, year, author, publisher);
+                searchGoogleBooks(query, isbn, year, author, publisher);
 
                 // Zobrazíme sekci s odpočtem
                 const countdownSection = document.getElementById('countdownSection');
@@ -111,7 +114,7 @@
 
                 addToRecentSearches(fullQuery);
             } else {
-                alert("Zadejte prosím název knihy.");
+                alert("Zadejte prosím název knihy nebo ISBN.");
             }
         }
 
@@ -123,13 +126,16 @@
                 `https://www.google.com/search?q=site:restorio.cz+${encodeURIComponent(fullQuery)}`,
                 `https://www.google.com/search?q=site:knihobot.cz+${encodeURIComponent(fullQuery)}`,
                 `https://www.google.com/search?q=site:valentinska.cz+${encodeURIComponent(fullQuery)}`,
-                `https://www.google.com/search?q=site:databazeknih.cz+${encodeURIComponent(fullQuery)}`
+                `https://www.google.com/search?q=site:databazeknih.cz+${encodeURIComponent(fullQuery)}`,
+                `https://www.google.com/search?q=site:reknihy.cz+${encodeURIComponent(fullQuery)}`
             ];
             searchUrls.forEach(url => window.open(url, '_blank'));
         }
 
-        function searchGoogleBooks(query, year, author, publisher) {
-            let apiQuery = `intitle:${query}`;
+        function searchGoogleBooks(query, isbn, year, author, publisher) {
+            let apiQuery = '';
+            if (query) apiQuery += `intitle:${query}`;
+            if (isbn) apiQuery += `+isbn:${isbn}`;
             if (author) apiQuery += `+inauthor:${author}`;
             if (publisher) apiQuery += `+inpublisher:${publisher}`;
             if (year) apiQuery += `+inpublishedDate:${year}`;
