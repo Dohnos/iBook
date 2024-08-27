@@ -8,14 +8,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Poppins', sans-serif; }
-        .iframe-container { 
-            width: 100%;
-            height: 600px;
-            margin-bottom: 20px;
-            border: none;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-        }
     </style>
 </head>
 <body class="bg-gradient-to-br from-blue-100 to-purple-100 min-h-screen flex flex-col items-center justify-center p-4">
@@ -30,6 +22,11 @@
         <div class="flex space-x-4 mb-6">
             <button onclick="searchBook()" class="flex-1 bg-indigo-600 text-white py-3 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 font-semibold text-lg shadow-md">🔍 Vyhledat knihu</button>
         </div>
+        
+        <!-- Nová sekce pro odpočet (přesunuto nad výsledky Google Books) -->
+        <div id="countdownSection" class="mt-4 p-4 bg-blue-100 rounded-lg hidden">
+            <p class="text-xl font-semibold text-blue-800">Otevření dalších vyhledávání za: <span id="countdown" class="font-bold">5</span> sekund</p>
+        </div>
 
         <!-- Sekce pro výsledky z Google Books -->
         <div id="googleBooksResults" class="mt-8 hidden">
@@ -39,13 +36,38 @@
             </div>
         </div>
 
-        <div id="searchResults" class="mt-8"></div>
-
         <div class="mt-8 p-4 bg-yellow-100 border-l-4 border-yellow-500 rounded-r-lg">
             <h2 class="text-xl font-semibold mb-2 text-yellow-800">⚠️ Důležité informace:</h2>
             <ul class="list-disc pl-5 space-y-2 text-yellow-700">
                 <li>❓ Pokud se objeví zpráva "Na váš předmět vyhledávání nebyl nalezen žádný odkaz", znamená to, že daný titul není na webu dostupný.</li>
                 <li>🌐 <strong>Vyhledávání probíhá na:</strong> Google Books, trhknih.cz, kniha4u.cz, restorio.cz, databazeknih.cz</li>
+                <li>🖥️ <strong>Pro správnou funkčnost:</strong> Je nutné mít v prohlížeči povolená vyskakovací okna pro tento web.</li>
+                <li>🔓 <strong>Jak povolit vyskakovací okna:</strong>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Google Chrome:
+                            <ol class="list-decimal pl-5 mt-1">
+                                <li>Klikněte na ikonu tří teček v pravém horním rohu prohlížeče</li>
+                                <li>Vyberte "Nastavení"</li>
+                                <li>V levém menu klikněte na "Ochrana soukromí a zabezpečení"</li>
+                                <li>Klikněte na "Nastavení webu"</li>
+                                <li>Najděte "Vyskakovací okna a přesměrování"</li>
+                                <li>Klikněte na "Přidat" vedle "Povoleno"</li>
+                                <li>Zadejte adresu tohoto webu a klikněte na "Přidat"</li>
+                            </ol>
+                        </li>
+                        <li>Microsoft Edge:
+                            <ol class="list-decimal pl-5 mt-1">
+                                <li>Klikněte na ikonu tří teček v pravém horním rohu prohlížeče</li>
+                                <li>Vyberte "Nastavení"</li>
+                                <li>V levém menu klikněte na "Oprávnění webu"</li>
+                                <li>Najděte "Vyskakovací okna a přesměrování"</li>
+                                <li>Zapněte přepínač "Povolit weby zobrazovat vyskakovací okna a přesměrování"</li>
+                                <li>Klikněte na "Přidat" pod "Povoleno"</li>
+                                <li>Zadejte adresu tohoto webu a klikněte na "Přidat"</li>
+                            </ol>
+                        </li>
+                    </ul>
+                </li>
             </ul>
         </div>
 
@@ -68,15 +90,32 @@
                 if (author) fullQuery += ` ${author}`;
                 if (publisher) fullQuery += ` ${publisher}`;
 
+                // Nejprve vyhledáme v Google Books
                 searchGoogleBooks(query, year, author, publisher);
-                displaySearchResults(fullQuery);
+
+                // Zobrazíme sekci s odpočtem
+                const countdownSection = document.getElementById('countdownSection');
+                countdownSection.classList.remove('hidden');
+                let countdown = 5;
+                const countdownElement = document.getElementById('countdown');
+                
+                const timer = setInterval(() => {
+                    countdown--;
+                    countdownElement.textContent = countdown;
+                    if (countdown <= 0) {
+                        clearInterval(timer);
+                        countdownSection.classList.add('hidden');
+                        openSearchUrls(fullQuery);
+                    }
+                }, 1000);
+
                 addToRecentSearches(fullQuery);
             } else {
                 alert("Zadejte prosím název knihy.");
             }
         }
 
-        function displaySearchResults(fullQuery) {
+        function openSearchUrls(fullQuery) {
             const searchUrls = [
                 `https://www.google.com/search?q=site:kniha4u.cz+${encodeURIComponent(fullQuery)}`,
                 `https://www.google.com/search?q=site:trhknih.cz+${encodeURIComponent(fullQuery)}`,
@@ -86,16 +125,7 @@
                 `https://www.google.com/search?q=site:valentinska.cz+${encodeURIComponent(fullQuery)}`,
                 `https://www.google.com/search?q=site:databazeknih.cz+${encodeURIComponent(fullQuery)}`
             ];
-
-            const searchResults = document.getElementById('searchResults');
-            searchResults.innerHTML = '';
-
-            searchUrls.forEach(url => {
-                const iframe = document.createElement('iframe');
-                iframe.src = url;
-                iframe.className = 'iframe-container';
-                searchResults.appendChild(iframe);
-            });
+            searchUrls.forEach(url => window.open(url, '_blank'));
         }
 
         function searchGoogleBooks(query, year, author, publisher) {
